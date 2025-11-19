@@ -393,24 +393,56 @@ const setTimeScale = (value) => {
     }
   };
 
-  const applyCooldownVisual = (button, remaining, total) => {
-    const fraction = remaining > 0 && total > 0 ? remaining / total : 0;
+  const applyCooldownVisual = (button, remaining, total, factor = 1) => {
+    const scaledTotal = total / factor;
+    const scaledRemaining = remaining / factor;
+    const fraction =
+      scaledRemaining > 0 && scaledTotal > 0
+        ? scaledRemaining / scaledTotal
+        : 0;
     button.classList.toggle("cooling", remaining > 0);
     button.style.setProperty("--cooldown", fraction.toFixed(3));
     const textEl = button.querySelector(".cooldown-text");
     if (textEl) {
       textEl.textContent =
-        remaining > 0 ? `${(remaining / 1000).toFixed(1)}s` : "";
+        scaledRemaining > 0 ? `${(scaledRemaining / 1000).toFixed(1)}s` : "";
     }
   };
 
   const updateActionStates = () => {
-    applyCooldownVisual(buyButton, buyCooldown, BUY_WOOD_COOLDOWN);
-    applyCooldownVisual(buyFoodButton, buyFoodCooldown, BUY_FOOD_COOLDOWN);
-    applyCooldownVisual(workButton, workCooldown, WORK_COOLDOWN);
-    applyCooldownVisual(eatButton, eatCooldown, EAT_COOLDOWN);
-    applyCooldownVisual(chopButton, chopCooldown, CHOP_COOLDOWN);
-    applyCooldownVisual(addLogButton, addLogCooldown, ADD_LOG_COOLDOWN);
+    const factorGeneral = timeScale * getEnergyFactor();
+    const factorEat = timeScale; // äta ska inte gå långsammare vid låg energi
+    applyCooldownVisual(
+      buyButton,
+      buyCooldown,
+      BUY_WOOD_COOLDOWN,
+      factorGeneral
+    );
+    applyCooldownVisual(
+      buyFoodButton,
+      buyFoodCooldown,
+      BUY_FOOD_COOLDOWN,
+      factorGeneral
+    );
+    applyCooldownVisual(
+      workButton,
+      workCooldown,
+      WORK_COOLDOWN,
+      factorGeneral
+    );
+    applyCooldownVisual(eatButton, eatCooldown, EAT_COOLDOWN, factorEat);
+    applyCooldownVisual(
+      chopButton,
+      chopCooldown,
+      CHOP_COOLDOWN,
+      factorGeneral
+    );
+    applyCooldownVisual(
+      addLogButton,
+      addLogCooldown,
+      ADD_LOG_COOLDOWN,
+      factorGeneral
+    );
     buyButton.disabled = coins < BUY_WOOD_COST || buyCooldown > 0;
     buyFoodButton.disabled = coins < BUY_FOOD_COST || buyFoodCooldown > 0;
     workButton.disabled = workCooldown > 0 || energy <= 5;
@@ -597,8 +629,11 @@ const setTimeScale = (value) => {
     eatPending = true;
   };
 
-  const tickCooldowns = (scaledDelta) => {
-    const applyTick = (value) => Math.max(0, value - scaledDelta);
+  const tickCooldowns = (deltaReal) => {
+    const factorGeneral = timeScale * getEnergyFactor();
+    const factorEat = timeScale;
+    const applyTick = (value, factor) =>
+      Math.max(0, value - deltaReal * factor);
 
     const prevBuy = buyCooldown;
     const prevBuyFood = buyFoodCooldown;
@@ -606,12 +641,12 @@ const setTimeScale = (value) => {
     const prevEat = eatCooldown;
     const prevChop = chopCooldown;
 
-    buyCooldown = applyTick(buyCooldown);
-    buyFoodCooldown = applyTick(buyFoodCooldown);
-    workCooldown = applyTick(workCooldown);
-    eatCooldown = applyTick(eatCooldown);
-    chopCooldown = applyTick(chopCooldown);
-    addLogCooldown = applyTick(addLogCooldown);
+    buyCooldown = applyTick(buyCooldown, factorGeneral);
+    buyFoodCooldown = applyTick(buyFoodCooldown, factorGeneral);
+    workCooldown = applyTick(workCooldown, factorGeneral);
+    eatCooldown = applyTick(eatCooldown, factorEat);
+    chopCooldown = applyTick(chopCooldown, factorGeneral);
+    addLogCooldown = applyTick(addLogCooldown, factorGeneral);
 
     if (buyPending && buyCooldown === 0 && prevBuy > 0) {
       buyPending = false;
@@ -733,7 +768,7 @@ const setTimeScale = (value) => {
     simTime += scaledDelta;
     updateLogs(scaledDelta);
     updateFuel(scaledDelta);
-    tickCooldowns(scaledDelta);
+    tickCooldowns(deltaReal);
 
     if (energy > 0) {
       energy = Math.max(
