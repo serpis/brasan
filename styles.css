@@ -109,7 +109,7 @@ body {
 .firebox {
   position: relative;
   width: 100%;
-  height: 280px;
+  height: 300px;
   border-radius: 20px;
   background: radial-gradient(circle at 50% 80%, #3a1f17, #0a0507 65%);
   box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.9);
@@ -142,8 +142,8 @@ body {
 
 .flames {
   width: clamp(240px, 35vw, 360px);
-  height: min(300px, 52vw);
-  margin-top: 14px;
+  height: min(280px, 48vw);
+  margin-top: 36px;
   filter: drop-shadow(0 0 18px rgba(255, 157, 79, 0.8));
   position: relative;
   z-index: 1;
@@ -188,21 +188,22 @@ body {
 
 .woodpile-visual {
   position: absolute;
-  bottom: 10px;
-  left: 14px;
-  width: 120px;
-  height: 90px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 6px;
-  align-items: flex-end;
+  bottom: 6px;
+  left: 12px;
+  width: 160px;
+  height: 110px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: 16px;
+  gap: 4px 3px;
+  align-items: end;
   z-index: 3;
 }
 
 .woodpile-log {
-  width: 32px;
+  width: 100%;
   height: 14px;
-  border-radius: 8px;
+  border-radius: 7px;
   background: linear-gradient(90deg, #4a2a10, #7a451c);
   box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.3);
   transform: rotate(var(--angle, 0deg));
@@ -442,9 +443,40 @@ body {
   color: #ffe5bb;
 }
 
+.energy-card {
+  grid-column: span 2;
+}
+
+.energy-bar {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.energy-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background: linear-gradient(90deg, #8af48f, #d6ffa8);
+  border-radius: 999px;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.energy-text {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 0.9rem;
+}
+
 .action-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.9rem;
   margin-top: 1rem;
 }

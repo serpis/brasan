@@ -9,8 +9,18 @@ const BUY_WOOD_COST = 8;
 const BUY_WOOD_AMOUNT = 3;
 const BUY_WOOD_COOLDOWN = 7000;
 const WORK_PAYOUT = 6;
-const WORK_COOLDOWN = 6000;
+const WORK_COOLDOWN = 8000;
 const MAX_WOOD_VISUAL = 18;
+const ADD_LOG_COOLDOWN = 900; // ms
+const BUY_FOOD_COST = 10;
+const BUY_FOOD_COOLDOWN = 6000;
+const FOOD_AMOUNT = 2;
+const EAT_COOLDOWN = 4000;
+const ENERGY_MAX = 100;
+const ENERGY_DECAY_PER_SEC = 3;
+const ENERGY_EAT_BOOST = 40;
+const ENERGY_SLOW_FACTOR = 0.35;
+const BASE_ACTION_COST = 0.5;
 
 const formatSpeed = (value) =>
   Number(value).toFixed(2).replace(/\.?0+$/, "") + "x";
@@ -187,8 +197,13 @@ const init = () => {
   const audioToggleButton = document.getElementById("toggle-audio");
   const woodCountEl = document.getElementById("wood-count");
   const coinCountEl = document.getElementById("coin-count");
+  const foodCountEl = document.getElementById("food-count");
+  const energyFillEl = document.getElementById("energy-fill");
+  const energyTextEl = document.getElementById("energy-text");
   const buyButton = document.getElementById("buy-wood");
+  const buyFoodButton = document.getElementById("buy-food");
   const workButton = document.getElementById("work");
+  const eatButton = document.getElementById("eat");
   const workerEl = document.getElementById("worker");
   const workerStatusEl = document.getElementById("worker-status");
   const woodPileEl = document.getElementById("woodpile-visual");
@@ -205,8 +220,13 @@ const init = () => {
     !audioToggleButton ||
     !woodCountEl ||
     !coinCountEl ||
+    !foodCountEl ||
+    !energyFillEl ||
+    !energyTextEl ||
     !buyButton ||
+    !buyFoodButton ||
     !workButton ||
+    !eatButton ||
     !workerEl ||
     !workerStatusEl ||
     !woodPileEl
@@ -229,9 +249,14 @@ const init = () => {
   let chartAccumulator = 0;
   let woodStock = 6;
   let coins = 20;
+  let foodStock = 3;
+  let energy = 80;
   let buyCooldown = 0;
+  let buyFoodCooldown = 0;
   let workCooldown = 0;
+  let eatCooldown = 0;
   let workActive = false;
+  let addLogCooldown = 0;
 
   const updateAudioButton = () => {
     const playing = audioEngine.isPlaying();
@@ -251,7 +276,7 @@ const init = () => {
     for (let i = 0; i < visible; i += 1) {
       const piece = document.createElement("div");
       piece.className = "woodpile-log";
-      piece.style.setProperty("--angle", `${(Math.random() - 0.5) * 12}deg`);
+      piece.style.setProperty("--angle", `${(Math.random() - 0.5) * 10}deg`);
       woodPileEl.appendChild(piece);
     }
   };
@@ -268,9 +293,39 @@ const init = () => {
 
   const updateWoodUI = () => {
     woodCountEl.textContent = String(woodStock);
-    addLogButton.disabled = woodStock <= 0;
+    addLogButton.disabled = woodStock <= 0 || addLogCooldown > 0;
     renderWoodPile();
   };
+
+  const updateFoodUI = () => {
+    foodCountEl.textContent = String(foodStock);
+  };
+
+  const updateEnergyUI = () => {
+    const pct = Math.max(0, Math.min(100, Math.round(energy)));
+    energyTextEl.textContent = `${pct}%`;
+    energyFillEl.style.width = `${pct}%`;
+    if (pct < 25) {
+      energyFillEl.style.background = "linear-gradient(90deg, #ff9b7a, #ffcc7a)";
+    } else {
+      energyFillEl.style.background = "linear-gradient(90deg, #8af48f, #d6ffa8)";
+    }
+  };
+
+  const getEnergyFactor = () =>
+    Math.max(ENERGY_SLOW_FACTOR, Math.min(1, energy / ENERGY_MAX));
+
+  const spendEnergy = (amount) => {
+    energy = Math.max(0, energy - (amount + BASE_ACTION_COST));
+    updateEnergyUI();
+  };
+
+  const gainEnergy = (amount) => {
+    energy = Math.min(ENERGY_MAX, energy + amount);
+    updateEnergyUI();
+  };
+
+  const adjustedTime = (baseMs) => baseMs / getEnergyFactor();
 
   const applyCooldownVisual = (button, remaining, total) => {
     const fraction = remaining > 0 ? remaining / total : 0;
@@ -285,9 +340,15 @@ const init = () => {
 
   const updateActionStates = () => {
     applyCooldownVisual(buyButton, buyCooldown, BUY_WOOD_COOLDOWN);
+    applyCooldownVisual(buyFoodButton, buyFoodCooldown, BUY_FOOD_COOLDOWN);
     applyCooldownVisual(workButton, workCooldown, WORK_COOLDOWN);
+    applyCooldownVisual(eatButton, eatCooldown, EAT_COOLDOWN);
+    applyCooldownVisual(addLogButton, addLogCooldown, ADD_LOG_COOLDOWN);
     buyButton.disabled = coins < BUY_WOOD_COST || buyCooldown > 0;
-    workButton.disabled = workCooldown > 0;
+    buyFoodButton.disabled = coins < BUY_FOOD_COST || buyFoodCooldown > 0;
+    workButton.disabled = workCooldown > 0 || energy <= 5;
+    eatButton.disabled = eatCooldown > 0 || foodStock <= 0;
+    addLogButton.disabled = woodStock <= 0 || addLogCooldown > 0;
   };
 
   const updateLogCount = () => {
@@ -442,9 +503,38 @@ const init = () => {
     setWorkerState(false);
   };
 
+  const buyFood = () => {
+    if (buyFoodCooldown > 0 || coins < BUY_FOOD_COST) return;
+    buyFoodCooldown = adjustedTime(BUY_FOOD_COOLDOWN);
+    coins -= BUY_FOOD_COST;
+    updateMoneyUI();
+    spendEnergy(3);
+    updateActionStates();
+    setTimeout(() => {
+      foodStock += FOOD_AMOUNT;
+      updateFoodUI();
+      updateActionStates();
+    }, buyFoodCooldown);
+  };
+
+  const eatFood = () => {
+    if (eatCooldown > 0 || foodStock <= 0) return;
+    eatCooldown = adjustedTime(EAT_COOLDOWN);
+    foodStock -= 1;
+    updateFoodUI();
+    updateActionStates();
+    setTimeout(() => {
+      gainEnergy(ENERGY_EAT_BOOST);
+      updateActionStates();
+    }, eatCooldown);
+  };
+
   const tickCooldowns = (deltaMs) => {
     if (buyCooldown > 0) {
       buyCooldown = Math.max(0, buyCooldown - deltaMs);
+    }
+    if (buyFoodCooldown > 0) {
+      buyFoodCooldown = Math.max(0, buyFoodCooldown - deltaMs);
     }
     if (workCooldown > 0) {
       workCooldown = Math.max(0, workCooldown - deltaMs);
@@ -452,13 +542,22 @@ const init = () => {
         finishWork();
       }
     }
+    if (eatCooldown > 0) {
+      eatCooldown = Math.max(0, eatCooldown - deltaMs);
+    }
+    if (addLogCooldown > 0) {
+      addLogCooldown = Math.max(0, addLogCooldown - deltaMs);
+    }
     updateActionStates();
   };
 
   const addLog = () => {
-    if (woodStock <= 0) {
+    if (woodStock <= 0 || addLogCooldown > 0) {
       return;
     }
+    addLogCooldown = adjustedTime(ADD_LOG_COOLDOWN);
+    updateActionStates();
+    spendEnergy(2);
     woodStock -= 1;
     if (logs.size >= MAX_VISIBLE_LOGS) {
       const [oldestId] = logs.keys();
@@ -494,24 +593,29 @@ const init = () => {
 
   const buyWood = () => {
     if (buyCooldown > 0 || coins < BUY_WOOD_COST) return;
+    buyCooldown = adjustedTime(BUY_WOOD_COOLDOWN);
     coins -= BUY_WOOD_COST;
-    woodStock += BUY_WOOD_AMOUNT;
-    buyCooldown = BUY_WOOD_COOLDOWN;
     updateMoneyUI();
-    updateWoodUI();
     updateActionStates();
-    woodPileEl.classList.add("restock");
+    spendEnergy(4);
     setTimeout(() => {
-      woodPileEl.classList.remove("restock");
-    }, 420);
+      woodStock += BUY_WOOD_AMOUNT;
+      updateWoodUI();
+      updateActionStates();
+      woodPileEl.classList.add("restock");
+      setTimeout(() => {
+        woodPileEl.classList.remove("restock");
+      }, 420);
+    }, buyCooldown);
   };
 
   const startWork = () => {
     if (workCooldown > 0) return;
-    workCooldown = WORK_COOLDOWN;
+    workCooldown = adjustedTime(WORK_COOLDOWN);
     workActive = true;
     setWorkerState(true);
     updateActionStates();
+    spendEnergy(12);
   };
 
   const updateLogs = (deltaMs) => {
@@ -541,11 +645,20 @@ const init = () => {
   const loop = (now) => {
     const deltaReal = now - lastFrame;
     lastFrame = now;
-    const scaledDelta = deltaReal * timeScale;
+    const scaledDelta = deltaReal * timeScale * getEnergyFactor();
     simTime += scaledDelta;
     updateLogs(scaledDelta);
     updateFuel(scaledDelta);
     tickCooldowns(deltaReal);
+
+    if (energy > 0) {
+      energy = Math.max(
+        0,
+        energy - (ENERGY_DECAY_PER_SEC * deltaReal) / 1000
+      );
+      updateEnergyUI();
+      updateActionStates();
+    }
     requestAnimationFrame(loop);
   };
 
@@ -567,7 +680,9 @@ const init = () => {
     updateAudioButton();
   });
   buyButton.addEventListener("click", buyWood);
+  buyFoodButton.addEventListener("click", buyFood);
   workButton.addEventListener("click", startWork);
+  eatButton.addEventListener("click", eatFood);
   speedSlider.addEventListener("input", (event) => {
     const value = safeNumber(parseFloat(event.target.value), 1);
     setTimeScale(value);
@@ -579,7 +694,9 @@ const init = () => {
   setTimeScale(timeScale);
   updateLogCount();
   updateWoodUI();
+  updateFoodUI();
   updateMoneyUI();
+  updateEnergyUI();
   updateActionStates();
   syncFuelUI();
   recordFuelSample();

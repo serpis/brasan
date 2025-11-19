@@ -98,6 +98,17 @@
             <span>Mynt</span>
             <strong id="coin-count">20</strong>
           </div>
+          <div class="resource-card">
+            <span>Mat</span>
+            <strong id="food-count">3</strong>
+          </div>
+          <div class="resource-card energy-card">
+            <span>Energi</span>
+            <div class="energy-bar">
+              <div class="energy-fill" id="energy-fill"></div>
+              <span class="energy-text" id="energy-text">80%</span>
+            </div>
+          </div>
         </div>
         <div class="action-grid">
           <button id="buy-wood" class="pill-button">
@@ -108,10 +119,26 @@
             <span class="cooldown-text" aria-live="polite"></span>
             <span class="cooldown-meter"></span>
           </button>
+          <button id="buy-food" class="pill-button">
+            <div class="label">
+              <span class="title">Köp mat (+2)</span>
+              <span class="sub">10 kr</span>
+            </div>
+            <span class="cooldown-text" aria-live="polite"></span>
+            <span class="cooldown-meter"></span>
+          </button>
           <button id="work" class="pill-button">
             <div class="label">
               <span class="title">Jobba</span>
               <span class="sub">+6 kr</span>
+            </div>
+            <span class="cooldown-text" aria-live="polite"></span>
+            <span class="cooldown-meter"></span>
+          </button>
+          <button id="eat" class="pill-button">
+            <div class="label">
+              <span class="title">Ät (+energi)</span>
+              <span class="sub">1 mat</span>
             </div>
             <span class="cooldown-text" aria-live="polite"></span>
             <span class="cooldown-meter"></span>
