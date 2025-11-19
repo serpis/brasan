@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mysig Brasa</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="scene">
+      <section class="fireplace-wrapper">
+        <div class="brick-wall">
+          <div class="fireplace">
+            <div class="chimney-cap"></div>
+            <div class="firebox">
+              <svg
+                class="flames"
+                viewBox="0 0 120 160"
+                aria-hidden="true"
+                role="img"
+              >
+                <defs>
+                  <radialGradient id="ember" cx="50%" cy="70%" r="50%">
+                    <stop offset="0%" stop-color="#ffe18c" />
+                    <stop offset="40%" stop-color="#ff9b3d" />
+                    <stop offset="100%" stop-color="#d54a1c" />
+                  </radialGradient>
+                  <linearGradient id="outerFlame" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <stop offset="0%" stop-color="#ffd86f" />
+                    <stop offset="30%" stop-color="#ff9f44" />
+                    <stop offset="100%" stop-color="#c42424" />
+                  </linearGradient>
+                </defs>
+                <g class="flame-group">
+                  <path
+                    class="flame flame-outer"
+                    d="M60 10 C85 40, 95 65, 80 100 C70 125, 70 145, 60 150 C50 145, 50 125, 40 100 C25 65, 35 40, 60 10 Z"
+                  ></path>
+                  <path
+                    class="flame flame-inner"
+                    d="M60 35 C78 58, 82 78, 70 100 C63 115, 63 132, 60 138 C57 132, 57 115, 50 100 C38 78, 42 58, 60 35 Z"
+                  ></path>
+                  <circle class="ember-core" cx="60" cy="120" r="16"></circle>
+                </g>
+              </svg>
+              <div class="log-layer" aria-live="polite"></div>
+            </div>
+            <div class="hearth"></div>
+            <div class="floor-tiles"></div>
+          </div>
+        </div>
+      </section>
+      <section class="control-panel">
+        <h1>Vintermysig brasa</h1>
+        <p>
+          Lägg på vedträn och dra upp vredet för att öka tiden när du vill se hur
+          elden håller sig vid liv.
+        </p>
+        <div class="controls">
+          <div class="action-buttons">
+            <button id="add-log">Lägg på ved</button>
+            <button id="toggle-audio" aria-pressed="false">Slå på sprak</button>
+          </div>
+          <div class="knob-wrapper">
+            <label for="time-speed">Tidshastighet</label>
+            <input
+              type="range"
+              id="time-speed"
+              min="0.25"
+              max="4"
+              step="0.25"
+              value="1"
+            />
+            <div class="speed-readout">
+              <span>0.25x</span>
+              <span id="speed-value">1x</span>
+              <span>4x</span>
+            </div>
+          </div>
+        </div>
+        <div class="status">
+          <div>
+            <strong>Vedträn:</strong>
+            <span id="log-count">0</span>
+          </div>
+          <div>
+            <strong>Glöd:</strong>
+            <span id="ember-status">slocknar</span>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <strong>Bränsle över tid</strong>
+            <span id="fuel-readout">0%</span>
+          </div>
+          <canvas
+            id="fuel-chart"
+            width="480"
+            height="140"
+            aria-label="Plott som visar mängden bränsle i brasan"
+            role="img"
+          ></canvas>
+        </div>
+      </section>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
