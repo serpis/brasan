@@ -16,6 +16,8 @@ const BUY_FOOD_COST = 10;
 const BUY_FOOD_COOLDOWN = 6000;
 const FOOD_AMOUNT = 2;
 const EAT_COOLDOWN = 4000;
+const CHOP_PAYOUT = 2;
+const CHOP_COOLDOWN = 9000;
 const ENERGY_MAX = 100;
 const ENERGY_DECAY_PER_SEC = 3;
 const ENERGY_EAT_BOOST = 40;
@@ -204,6 +206,12 @@ const init = () => {
   const buyFoodButton = document.getElementById("buy-food");
   const workButton = document.getElementById("work");
   const eatButton = document.getElementById("eat");
+  const chopButton = document.getElementById("chop");
+  const metaBuyWood = document.getElementById("meta-buy-wood");
+  const metaBuyFood = document.getElementById("meta-buy-food");
+  const metaWork = document.getElementById("meta-work");
+  const metaEat = document.getElementById("meta-eat");
+  const metaChop = document.getElementById("meta-chop");
   const workerEl = document.getElementById("worker");
   const workerStatusEl = document.getElementById("worker-status");
   const woodPileEl = document.getElementById("woodpile-visual");
@@ -227,6 +235,7 @@ const init = () => {
     !buyFoodButton ||
     !workButton ||
     !eatButton ||
+    !chopButton ||
     !workerEl ||
     !workerStatusEl ||
     !woodPileEl
@@ -255,7 +264,13 @@ const init = () => {
   let buyFoodCooldown = 0;
   let workCooldown = 0;
   let eatCooldown = 0;
+  let chopCooldown = 0;
   let workActive = false;
+  let chopActive = false;
+  let buyPending = false;
+  let buyFoodPending = false;
+  let eatPending = false;
+  let chopPending = false;
   let addLogCooldown = 0;
 
   const updateAudioButton = () => {
@@ -281,11 +296,12 @@ const init = () => {
     }
   };
 
-  const setTimeScale = (value) => {
-    timeScale = value;
-    speedValue.textContent = formatSpeed(value);
-    root.style.setProperty("--fire-speed", value);
-  };
+const setTimeScale = (value) => {
+  timeScale = value;
+  speedValue.textContent = formatSpeed(value);
+  root.style.setProperty("--fire-speed", value);
+  updateMeta();
+};
 
   const updateMoneyUI = () => {
     coinCountEl.textContent = String(coins);
@@ -310,6 +326,7 @@ const init = () => {
     } else {
       energyFillEl.style.background = "linear-gradient(90deg, #8af48f, #d6ffa8)";
     }
+    updateMeta();
   };
 
   const getEnergyFactor = () =>
@@ -325,7 +342,38 @@ const init = () => {
     updateEnergyUI();
   };
 
-  const adjustedTime = (baseMs) => baseMs / getEnergyFactor();
+  const formatSeconds = (ms) => `${(ms / 1000).toFixed(1).replace(/\.0$/, "")}s`;
+
+  const effectiveDuration = (baseMs) =>
+    baseMs / (timeScale * getEnergyFactor());
+
+  const updateMeta = () => {
+    if (metaBuyWood) {
+      metaBuyWood.textContent = `-8 kr · +3 ved · ${formatSeconds(
+        effectiveDuration(BUY_WOOD_COOLDOWN)
+      )}`;
+    }
+    if (metaBuyFood) {
+      metaBuyFood.textContent = `-10 kr · +2 mat · ${formatSeconds(
+        effectiveDuration(BUY_FOOD_COOLDOWN)
+      )}`;
+    }
+    if (metaWork) {
+      metaWork.textContent = `-energi · +6 kr · ${formatSeconds(
+        effectiveDuration(WORK_COOLDOWN)
+      )}`;
+    }
+    if (metaEat) {
+      metaEat.textContent = `-1 mat · +energi · ${formatSeconds(
+        effectiveDuration(EAT_COOLDOWN)
+      )}`;
+    }
+    if (metaChop) {
+      metaChop.textContent = `-energi · +${CHOP_PAYOUT} ved · ${formatSeconds(
+        effectiveDuration(CHOP_COOLDOWN)
+      )}`;
+    }
+  };
 
   const applyCooldownVisual = (button, remaining, total) => {
     const fraction = remaining > 0 ? remaining / total : 0;
@@ -343,11 +391,13 @@ const init = () => {
     applyCooldownVisual(buyFoodButton, buyFoodCooldown, BUY_FOOD_COOLDOWN);
     applyCooldownVisual(workButton, workCooldown, WORK_COOLDOWN);
     applyCooldownVisual(eatButton, eatCooldown, EAT_COOLDOWN);
+    applyCooldownVisual(chopButton, chopCooldown, CHOP_COOLDOWN);
     applyCooldownVisual(addLogButton, addLogCooldown, ADD_LOG_COOLDOWN);
     buyButton.disabled = coins < BUY_WOOD_COST || buyCooldown > 0;
     buyFoodButton.disabled = coins < BUY_FOOD_COST || buyFoodCooldown > 0;
     workButton.disabled = workCooldown > 0 || energy <= 5;
     eatButton.disabled = eatCooldown > 0 || foodStock <= 0;
+    chopButton.disabled = chopCooldown > 0 || energy <= 8;
     addLogButton.disabled = woodStock <= 0 || addLogCooldown > 0;
   };
 
@@ -489,9 +539,16 @@ const init = () => {
     syncFuelUI();
   };
 
-  const setWorkerState = (working) => {
-    workerEl.classList.toggle("working", working);
-    workerStatusEl.textContent = working ? "jobbar..." : "redo";
+  const setWorkerMode = (mode) => {
+    workerEl.classList.toggle("working", mode === "work");
+    workerEl.classList.toggle("chopping", mode === "chop");
+    if (mode === "work") {
+      workerStatusEl.textContent = "jobbar...";
+    } else if (mode === "chop") {
+      workerStatusEl.textContent = "hugger ved...";
+    } else {
+      workerStatusEl.textContent = "redo";
+    }
   };
 
   const finishWork = () => {
@@ -500,54 +557,71 @@ const init = () => {
     coins += WORK_PAYOUT;
     updateMoneyUI();
     updateActionStates();
-    setWorkerState(false);
+    setWorkerMode("idle");
   };
 
   const buyFood = () => {
     if (buyFoodCooldown > 0 || coins < BUY_FOOD_COST) return;
-    buyFoodCooldown = adjustedTime(BUY_FOOD_COOLDOWN);
+    buyFoodCooldown = BUY_FOOD_COOLDOWN;
     coins -= BUY_FOOD_COST;
     updateMoneyUI();
     spendEnergy(3);
     updateActionStates();
-    setTimeout(() => {
-      foodStock += FOOD_AMOUNT;
-      updateFoodUI();
-      updateActionStates();
-    }, buyFoodCooldown);
+    buyFoodPending = true;
   };
 
   const eatFood = () => {
     if (eatCooldown > 0 || foodStock <= 0) return;
-    eatCooldown = adjustedTime(EAT_COOLDOWN);
+    eatCooldown = EAT_COOLDOWN;
     foodStock -= 1;
     updateFoodUI();
     updateActionStates();
-    setTimeout(() => {
-      gainEnergy(ENERGY_EAT_BOOST);
-      updateActionStates();
-    }, eatCooldown);
+    eatPending = true;
   };
 
-  const tickCooldowns = (deltaMs) => {
-    if (buyCooldown > 0) {
-      buyCooldown = Math.max(0, buyCooldown - deltaMs);
+  const tickCooldowns = (scaledDelta) => {
+    const applyTick = (value) => Math.max(0, value - scaledDelta);
+
+    const prevBuy = buyCooldown;
+    const prevBuyFood = buyFoodCooldown;
+    const prevWork = workCooldown;
+    const prevEat = eatCooldown;
+    const prevChop = chopCooldown;
+
+    buyCooldown = applyTick(buyCooldown);
+    buyFoodCooldown = applyTick(buyFoodCooldown);
+    workCooldown = applyTick(workCooldown);
+    eatCooldown = applyTick(eatCooldown);
+    chopCooldown = applyTick(chopCooldown);
+    addLogCooldown = applyTick(addLogCooldown);
+
+    if (buyPending && buyCooldown === 0 && prevBuy > 0) {
+      buyPending = false;
+      woodStock += BUY_WOOD_AMOUNT;
+      updateWoodUI();
+      woodPileEl.classList.add("restock");
+      setTimeout(() => woodPileEl.classList.remove("restock"), 420);
     }
-    if (buyFoodCooldown > 0) {
-      buyFoodCooldown = Math.max(0, buyFoodCooldown - deltaMs);
+    if (buyFoodPending && buyFoodCooldown === 0 && prevBuyFood > 0) {
+      buyFoodPending = false;
+      foodStock += FOOD_AMOUNT;
+      updateFoodUI();
     }
-    if (workCooldown > 0) {
-      workCooldown = Math.max(0, workCooldown - deltaMs);
-      if (workCooldown === 0) {
-        finishWork();
-      }
+    if (workActive && workCooldown === 0 && prevWork > 0) {
+      finishWork();
     }
-    if (eatCooldown > 0) {
-      eatCooldown = Math.max(0, eatCooldown - deltaMs);
+    if (eatPending && eatCooldown === 0 && prevEat > 0) {
+      eatPending = false;
+      gainEnergy(ENERGY_EAT_BOOST);
     }
-    if (addLogCooldown > 0) {
-      addLogCooldown = Math.max(0, addLogCooldown - deltaMs);
+    if (chopPending && chopCooldown === 0 && prevChop > 0) {
+      chopPending = false;
+      chopActive = false;
+      woodStock += CHOP_PAYOUT;
+      updateWoodUI();
+      setWorkerMode("idle");
     }
+
     updateActionStates();
   };
 
@@ -555,7 +629,7 @@ const init = () => {
     if (woodStock <= 0 || addLogCooldown > 0) {
       return;
     }
-    addLogCooldown = adjustedTime(ADD_LOG_COOLDOWN);
+    addLogCooldown = ADD_LOG_COOLDOWN;
     updateActionStates();
     spendEnergy(2);
     woodStock -= 1;
@@ -593,27 +667,19 @@ const init = () => {
 
   const buyWood = () => {
     if (buyCooldown > 0 || coins < BUY_WOOD_COST) return;
-    buyCooldown = adjustedTime(BUY_WOOD_COOLDOWN);
+    buyCooldown = BUY_WOOD_COOLDOWN;
     coins -= BUY_WOOD_COST;
     updateMoneyUI();
     updateActionStates();
     spendEnergy(4);
-    setTimeout(() => {
-      woodStock += BUY_WOOD_AMOUNT;
-      updateWoodUI();
-      updateActionStates();
-      woodPileEl.classList.add("restock");
-      setTimeout(() => {
-        woodPileEl.classList.remove("restock");
-      }, 420);
-    }, buyCooldown);
+    buyPending = true;
   };
 
   const startWork = () => {
     if (workCooldown > 0) return;
-    workCooldown = adjustedTime(WORK_COOLDOWN);
+    workCooldown = WORK_COOLDOWN;
     workActive = true;
-    setWorkerState(true);
+    setWorkerMode("work");
     updateActionStates();
     spendEnergy(12);
   };
@@ -649,12 +715,12 @@ const init = () => {
     simTime += scaledDelta;
     updateLogs(scaledDelta);
     updateFuel(scaledDelta);
-    tickCooldowns(deltaReal);
+    tickCooldowns(scaledDelta);
 
     if (energy > 0) {
       energy = Math.max(
         0,
-        energy - (ENERGY_DECAY_PER_SEC * deltaReal) / 1000
+        energy - (ENERGY_DECAY_PER_SEC * scaledDelta) / 1000
       );
       updateEnergyUI();
       updateActionStates();
@@ -683,15 +749,26 @@ const init = () => {
   buyFoodButton.addEventListener("click", buyFood);
   workButton.addEventListener("click", startWork);
   eatButton.addEventListener("click", eatFood);
+  chopButton.addEventListener("click", () => {
+    if (chopCooldown > 0) return;
+    chopCooldown = CHOP_COOLDOWN;
+    chopPending = true;
+    chopActive = true;
+    setWorkerMode("chop");
+    spendEnergy(9);
+    updateActionStates();
+  });
   speedSlider.addEventListener("input", (event) => {
     const value = safeNumber(parseFloat(event.target.value), 1);
     setTimeScale(value);
+    updateMeta();
   });
 
   if (audioEngine.supported) {
     updateAudioButton();
   }
   setTimeScale(timeScale);
+  updateMeta();
   updateLogCount();
   updateWoodUI();
   updateFoodUI();

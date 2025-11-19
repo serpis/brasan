@@ -15,7 +15,8 @@
   - `fuelHistory` + `drawChart()` för att rita linje/area på canvas (senaste 60 s simulerad tid).
 - **Animationer:** CSS använder `--fire-speed`, `--flame-scale-x/y`, `--glow-scale`, `--ember-scale` och `--flame-opacity`; JS uppdaterar dem efter tidsskalning respektive bränslenivå.
 - **Kontroller:** Tidshastighet (`#time-speed`) styr både JS-simulering och CSS-animation; knappen `#add-log` lägger till loggar/fuel.
-- **Ekonomi & resurser:** Vedhög (`#wood-count` + `#woodpile-visual`), mynt (`#coin-count`), mat (`#food-count`). Köper med `#buy-wood`/`#buy-food` (cooldowns, kostnader) och tjänar med `#work` (cooldown). Ved krävs för att lägga på brasan och själva vedlägget har egen cooldown.
+- **Ekonomi & resurser:** Vedhög (`#wood-count` + `#woodpile-visual`), mynt (`#coin-count`), mat (`#food-count`). Köper med `#buy-wood`/`#buy-food` (cooldowns, kostnader), tjänar pengar med `#work`, hugger ved med `#chop` (kostar energi, ger ved med längre cooldown). Ved krävs för att lägga på brasan och själva vedlägget har egen cooldown.
+- **Energi/mat:** Energi decayer över tid och sänker sim/cooldowns via `getEnergyFactor()`. Ät med `#eat` (cooldown) för att fylla energi; mat köps med mynt.
 - **Ljud:** Web Audio (`createCrackleEngine`) genererar sprakande bakgrund med brus + korta poppar via filter. `#toggle-audio` startar/stoppar ljudet och kräver användarinteraktion för att aktivera `AudioContext`.
 
 ## Arbetsflödesregler (ärvda från tidigare agent)
