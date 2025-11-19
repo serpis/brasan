@@ -884,3 +884,6 @@ body {
     height: 240px;
   }
 }
+.woodpile-visual {
+  display: none;
+}
