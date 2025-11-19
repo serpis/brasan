@@ -202,6 +202,7 @@ const init = () => {
   const foodCountEl = document.getElementById("food-count");
   const coinIconsEl = document.getElementById("coin-icons");
   const foodIconsEl = document.getElementById("food-icons");
+  const woodIconsEl = document.getElementById("wood-icons");
   const energyFillEl = document.getElementById("energy-fill");
   const energyTextEl = document.getElementById("energy-text");
   const buyButton = document.getElementById("buy-wood");
@@ -233,6 +234,7 @@ const init = () => {
     !foodCountEl ||
     !coinIconsEl ||
     !foodIconsEl ||
+    !woodIconsEl ||
     !energyFillEl ||
     !energyTextEl ||
     !buyButton ||
@@ -290,13 +292,13 @@ const init = () => {
   }
 
   const renderWoodPile = () => {
-    woodPileEl.innerHTML = "";
+    // Woodpile visual now lives in the resource card, not in the fireplace box.
+    woodIconsEl.innerHTML = "";
     const visible = Math.min(MAX_WOOD_VISUAL, woodStock);
     for (let i = 0; i < visible; i += 1) {
       const piece = document.createElement("div");
-      piece.className = "woodpile-log";
-      piece.style.setProperty("--angle", `${(Math.random() - 0.5) * 10}deg`);
-      woodPileEl.appendChild(piece);
+      piece.className = "wood-icon";
+      woodIconsEl.appendChild(piece);
     }
   };
 

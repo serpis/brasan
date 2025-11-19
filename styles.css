@@ -45,9 +45,9 @@ body {
 .scene {
   display: grid;
   gap: 1.5rem;
-  grid-template-columns: 1.1fr 0.9fr;
-  align-items: center;
-  width: min(1200px, 100%);
+  grid-template-columns: minmax(520px, 1.15fr) minmax(420px, 0.85fr);
+  align-items: start;
+  width: min(1180px, 100%);
 }
 
 .fireplace-wrapper {
@@ -188,42 +188,6 @@ body {
   z-index: 2;
 }
 
-.woodpile-visual {
-  position: absolute;
-  bottom: -10px;
-  left: 12px;
-  width: 180px;
-  height: 120px;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-auto-rows: 16px;
-  gap: 4px 3px;
-  align-items: end;
-  z-index: 5;
-}
-
-.woodpile-log {
-  width: 100%;
-  height: 14px;
-  border-radius: 7px;
-  background: linear-gradient(90deg, #4a2a10, #7a451c);
-  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.3);
-  transform: rotate(var(--angle, 0deg));
-  opacity: 0.95;
-}
-
-.woodpile-log::after {
-  content: "";
-  display: block;
-  margin: 3px 6px;
-  height: 4px;
-  border-radius: 3px;
-  background: rgba(255, 220, 180, 0.25);
-}
-
-.woodpile-visual.restock {
-  animation: pilePop 0.5s ease;
-}
 
 .log {
   position: absolute;
@@ -469,6 +433,14 @@ body {
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #ffe9a6, #ffcd5a 65%, #c4922c);
   box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.25);
+}
+
+.wood-icon {
+  width: 26px;
+  height: 12px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #4a2a10, #7a451c);
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.25);
 }
 
 .steak {
