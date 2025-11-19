@@ -210,6 +210,8 @@ const init = () => {
   const workButton = document.getElementById("work");
   const eatButton = document.getElementById("eat");
   const chopButton = document.getElementById("chop");
+  const addLogMeter = document.getElementById("add-log-meter");
+  const addLogText = document.getElementById("add-log-text");
   const metaBuyWood = document.getElementById("meta-buy-wood");
   const metaBuyFood = document.getElementById("meta-buy-food");
   const metaWork = document.getElementById("meta-work");
@@ -242,6 +244,8 @@ const init = () => {
     !workButton ||
     !eatButton ||
     !chopButton ||
+    !addLogMeter ||
+    !addLogText ||
     !workerEl ||
     !workerStatusEl ||
     !woodPileEl
@@ -445,6 +449,17 @@ const setTimeScale = (value) => {
       ADD_LOG_COOLDOWN,
       factorGeneral
     );
+    const scaledTotal = ADD_LOG_COOLDOWN / factorGeneral;
+    const scaledRemain = addLogCooldown / factorGeneral;
+    if (addLogMeter) {
+      const fraction =
+        scaledRemain > 0 && scaledTotal > 0 ? scaledRemain / scaledTotal : 0;
+      addLogMeter.style.setProperty("--cd", fraction.toFixed(3));
+    }
+    if (addLogText) {
+      addLogText.textContent =
+        scaledRemain > 0 ? `${(scaledRemain / 1000).toFixed(1)}s` : "";
+    }
     buyButton.disabled = coins < BUY_WOOD_COST || buyCooldown > 0;
     buyFoodButton.disabled = coins < BUY_FOOD_COST || buyFoodCooldown > 0;
     workButton.disabled = workCooldown > 0 || energy <= 5;

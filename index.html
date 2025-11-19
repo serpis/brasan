@@ -59,7 +59,13 @@
         </p>
         <div class="controls">
           <div class="action-buttons">
-            <button id="add-log">Lägg på ved</button>
+            <div class="primary-action">
+              <button id="add-log">Lägg på ved</button>
+              <div class="primary-cooldown">
+                <div class="primary-fill" id="add-log-meter"></div>
+                <span class="primary-text" id="add-log-text"></span>
+              </div>
+            </div>
             <button id="toggle-audio" aria-pressed="false">Slå på sprak</button>
           </div>
           <div class="knob-wrapper">

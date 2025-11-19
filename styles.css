@@ -294,6 +294,7 @@ body {
 }
 
 #add-log,
+#add-log,
 #toggle-audio {
   border-radius: 999px;
   padding: 0.85rem 1.8rem;
@@ -327,6 +328,38 @@ body {
   background: rgba(246, 177, 102, 0.9);
   color: #2f150d;
   box-shadow: 0 12px 26px rgba(246, 177, 102, 0.35);
+}
+
+.primary-action {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.primary-cooldown {
+  position: relative;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  min-width: 120px;
+  overflow: hidden;
+}
+
+.primary-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #ffd27a, #f3b56b);
+  transform-origin: right;
+  transform: scaleX(var(--cd, 0));
+  transition: transform 0.1s linear;
+}
+
+.primary-text {
+  font-size: 0.85rem;
+  display: inline-block;
+  margin-top: 2px;
+  color: rgba(252, 234, 207, 0.8);
+  min-height: 16px;
 }
 
 #toggle-audio:disabled {
