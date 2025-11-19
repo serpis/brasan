@@ -376,7 +376,7 @@ const setTimeScale = (value) => {
   };
 
   const applyCooldownVisual = (button, remaining, total) => {
-    const fraction = remaining > 0 ? remaining / total : 0;
+    const fraction = remaining > 0 && total > 0 ? remaining / total : 0;
     button.classList.toggle("cooling", remaining > 0);
     button.style.setProperty("--cooldown", fraction.toFixed(3));
     const textEl = button.querySelector(".cooldown-text");

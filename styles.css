@@ -540,9 +540,9 @@ body {
     rgba(255, 255, 255, 0.1),
     rgba(255, 255, 255, 0.28)
   );
-  transform-origin: left;
+  transform-origin: right;
   transform: scaleX(var(--cooldown, 0));
-  opacity: 0.4;
+  opacity: 0.35;
   pointer-events: none;
 }
 
