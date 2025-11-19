@@ -8,6 +8,48 @@
   </head>
   <body>
     <div class="scene">
+      <aside class="quick-panel">
+        <h2>Braskontroller</h2>
+        <div class="action-buttons">
+          <div class="primary-action">
+            <button id="add-log">Lägg på ved</button>
+            <div class="primary-cooldown">
+              <div class="primary-fill" id="add-log-meter"></div>
+              <span class="primary-text" id="add-log-text"></span>
+            </div>
+          </div>
+          <button id="toggle-audio" aria-pressed="false">Slå på sprak</button>
+        </div>
+        <div class="time-control">
+          <div class="time-header">
+            <span>Tidshastighet</span>
+            <span id="speed-value">1x</span>
+          </div>
+          <input
+            type="range"
+            id="time-speed"
+            min="0.25"
+            max="4"
+            step="0.25"
+            value="1"
+          />
+          <div class="speed-readout">
+            <span>0.25x</span>
+            <span>3.25x</span>
+            <span>4x</span>
+          </div>
+        </div>
+        <div class="status">
+          <div>
+            <strong>Vedträn:</strong>
+            <span id="log-count">0</span>
+          </div>
+          <div>
+            <strong>Glöd:</strong>
+            <span id="ember-status">slocknar</span>
+          </div>
+        </div>
+      </aside>
       <section class="fireplace-wrapper">
         <div class="brick-wall">
           <div class="fireplace">
@@ -59,13 +101,6 @@
         </p>
         <div class="controls">
           <div class="action-buttons">
-            <div class="primary-action">
-              <button id="add-log">Lägg på ved</button>
-              <div class="primary-cooldown">
-                <div class="primary-fill" id="add-log-meter"></div>
-                <span class="primary-text" id="add-log-text"></span>
-              </div>
-            </div>
             <button id="toggle-audio" aria-pressed="false">Slå på sprak</button>
           </div>
           <div class="knob-wrapper">
@@ -82,18 +117,6 @@
               <span>0.25x</span>
               <span id="speed-value">1x</span>
               <span>4x</span>
-            </div>
-          </div>
-        </div>
-        <div class="status-grid">
-          <div class="status">
-            <div>
-              <strong>Vedträn:</strong>
-              <span id="log-count">0</span>
-            </div>
-            <div>
-              <strong>Glöd:</strong>
-              <span id="ember-status">slocknar</span>
             </div>
           </div>
         </div>

@@ -44,10 +44,25 @@ body {
 
 .scene {
   display: grid;
-  gap: 1.5rem;
-  grid-template-columns: minmax(520px, 1.15fr) minmax(420px, 0.85fr);
+  gap: 1.25rem;
+  grid-template-columns: 320px minmax(500px, 1fr);
   align-items: start;
   width: min(1180px, 100%);
+}
+
+.quick-panel {
+  background: rgba(18, 10, 10, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  padding: 1.2rem 1.1rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  display: grid;
+  gap: 0.9rem;
+}
+
+.quick-panel h2 {
+  margin: 0;
+  font-size: 1.2rem;
 }
 
 .fireplace-wrapper {
@@ -255,6 +270,7 @@ body {
   padding: 1.6rem;
   backdrop-filter: blur(6px);
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.38);
+  margin-top: 0.5rem;
 }
 
 .control-panel h1 {
@@ -267,23 +283,13 @@ body {
   margin-top: 0.6rem;
 }
 
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.4rem;
-}
-
 .control-panel p {
   margin-top: 0;
   color: rgba(252, 234, 207, 0.85);
 }
 
 .controls {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-top: 1rem;
+  display: none;
 }
 
 .action-buttons {
