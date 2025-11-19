@@ -5,6 +5,12 @@ const MAX_FUEL = 100;
 const FUEL_DECAY = 0.06; // per simulated second
 const CHART_WINDOW = 60000; // ms of simulated time
 const CHART_SAMPLE_INTERVAL = 200; // ms
+const BUY_WOOD_COST = 8;
+const BUY_WOOD_AMOUNT = 3;
+const BUY_WOOD_COOLDOWN = 7000;
+const WORK_PAYOUT = 6;
+const WORK_COOLDOWN = 6000;
+const MAX_WOOD_VISUAL = 18;
 
 const formatSpeed = (value) =>
   Number(value).toFixed(2).replace(/\.?0+$/, "") + "x";
@@ -19,6 +25,8 @@ const createCrackleEngine = () => {
   let popTimer = null;
   let noiseBuffer;
   let popBuffer;
+  let highPass;
+  let lowPass;
   let intensity = 0;
   let playing = false;
 
@@ -28,6 +36,14 @@ const createCrackleEngine = () => {
     ctx = new AudioContextClass();
     gainNode = ctx.createGain();
     gainNode.gain.value = 0;
+    highPass = ctx.createBiquadFilter();
+    highPass.type = "highpass";
+    highPass.frequency.value = 450;
+    lowPass = ctx.createBiquadFilter();
+    lowPass.type = "lowpass";
+    lowPass.frequency.value = 4200;
+    highPass.connect(lowPass);
+    lowPass.connect(gainNode);
     gainNode.connect(ctx.destination);
     const bufferLength = Math.floor(ctx.sampleRate * 1.2);
     noiseBuffer = ctx.createBuffer(1, bufferLength, ctx.sampleRate);
@@ -47,7 +63,7 @@ const createCrackleEngine = () => {
     source = ctx.createBufferSource();
     source.buffer = noiseBuffer;
     source.loop = true;
-    source.connect(gainNode);
+    source.connect(highPass);
     source.start();
     return true;
   };
@@ -82,7 +98,7 @@ const createCrackleEngine = () => {
       now + 0.08
     );
     popSource.connect(popGain);
-    popGain.connect(gainNode);
+    popGain.connect(highPass);
     popSource.start(now);
     popSource.stop(now + 0.09);
   };
@@ -169,6 +185,13 @@ const init = () => {
   const fuelReadout = document.getElementById("fuel-readout");
   const fuelCanvas = document.getElementById("fuel-chart");
   const audioToggleButton = document.getElementById("toggle-audio");
+  const woodCountEl = document.getElementById("wood-count");
+  const coinCountEl = document.getElementById("coin-count");
+  const buyButton = document.getElementById("buy-wood");
+  const workButton = document.getElementById("work");
+  const workerEl = document.getElementById("worker");
+  const workerStatusEl = document.getElementById("worker-status");
+  const woodPileEl = document.getElementById("woodpile-visual");
   const root = document.documentElement;
 
   if (
@@ -179,7 +202,14 @@ const init = () => {
     !logCountEl ||
     !emberStatusEl ||
     !fuelReadout ||
-    !audioToggleButton
+    !audioToggleButton ||
+    !woodCountEl ||
+    !coinCountEl ||
+    !buyButton ||
+    !workButton ||
+    !workerEl ||
+    !workerStatusEl ||
+    !woodPileEl
   ) {
     return;
   }
@@ -197,6 +227,11 @@ const init = () => {
   let simTime = 0;
   const fuelHistory = [];
   let chartAccumulator = 0;
+  let woodStock = 6;
+  let coins = 20;
+  let buyCooldown = 0;
+  let workCooldown = 0;
+  let workActive = false;
 
   const updateAudioButton = () => {
     const playing = audioEngine.isPlaying();
@@ -210,10 +245,49 @@ const init = () => {
     audioToggleButton.setAttribute("aria-pressed", "false");
   }
 
+  const renderWoodPile = () => {
+    woodPileEl.innerHTML = "";
+    const visible = Math.min(MAX_WOOD_VISUAL, woodStock);
+    for (let i = 0; i < visible; i += 1) {
+      const piece = document.createElement("div");
+      piece.className = "woodpile-log";
+      piece.style.setProperty("--angle", `${(Math.random() - 0.5) * 12}deg`);
+      woodPileEl.appendChild(piece);
+    }
+  };
+
   const setTimeScale = (value) => {
     timeScale = value;
     speedValue.textContent = formatSpeed(value);
     root.style.setProperty("--fire-speed", value);
+  };
+
+  const updateMoneyUI = () => {
+    coinCountEl.textContent = String(coins);
+  };
+
+  const updateWoodUI = () => {
+    woodCountEl.textContent = String(woodStock);
+    addLogButton.disabled = woodStock <= 0;
+    renderWoodPile();
+  };
+
+  const applyCooldownVisual = (button, remaining, total) => {
+    const fraction = remaining > 0 ? remaining / total : 0;
+    button.classList.toggle("cooling", remaining > 0);
+    button.style.setProperty("--cooldown", fraction.toFixed(3));
+    const textEl = button.querySelector(".cooldown-text");
+    if (textEl) {
+      textEl.textContent =
+        remaining > 0 ? `${(remaining / 1000).toFixed(1)}s` : "";
+    }
+  };
+
+  const updateActionStates = () => {
+    applyCooldownVisual(buyButton, buyCooldown, BUY_WOOD_COOLDOWN);
+    applyCooldownVisual(workButton, workCooldown, WORK_COOLDOWN);
+    buyButton.disabled = coins < BUY_WOOD_COST || buyCooldown > 0;
+    workButton.disabled = workCooldown > 0;
   };
 
   const updateLogCount = () => {
@@ -354,7 +428,38 @@ const init = () => {
     syncFuelUI();
   };
 
+  const setWorkerState = (working) => {
+    workerEl.classList.toggle("working", working);
+    workerStatusEl.textContent = working ? "jobbar..." : "redo";
+  };
+
+  const finishWork = () => {
+    if (!workActive) return;
+    workActive = false;
+    coins += WORK_PAYOUT;
+    updateMoneyUI();
+    updateActionStates();
+    setWorkerState(false);
+  };
+
+  const tickCooldowns = (deltaMs) => {
+    if (buyCooldown > 0) {
+      buyCooldown = Math.max(0, buyCooldown - deltaMs);
+    }
+    if (workCooldown > 0) {
+      workCooldown = Math.max(0, workCooldown - deltaMs);
+      if (workCooldown === 0) {
+        finishWork();
+      }
+    }
+    updateActionStates();
+  };
+
   const addLog = () => {
+    if (woodStock <= 0) {
+      return;
+    }
+    woodStock -= 1;
     if (logs.size >= MAX_VISIBLE_LOGS) {
       const [oldestId] = logs.keys();
       removeLog(oldestId);
@@ -382,7 +487,31 @@ const init = () => {
     logEl.dataset.id = String(id);
     logLayer.appendChild(logEl);
     updateLogCount();
+    updateWoodUI();
+    updateActionStates();
     addFuel();
+  };
+
+  const buyWood = () => {
+    if (buyCooldown > 0 || coins < BUY_WOOD_COST) return;
+    coins -= BUY_WOOD_COST;
+    woodStock += BUY_WOOD_AMOUNT;
+    buyCooldown = BUY_WOOD_COOLDOWN;
+    updateMoneyUI();
+    updateWoodUI();
+    updateActionStates();
+    woodPileEl.classList.add("restock");
+    setTimeout(() => {
+      woodPileEl.classList.remove("restock");
+    }, 420);
+  };
+
+  const startWork = () => {
+    if (workCooldown > 0) return;
+    workCooldown = WORK_COOLDOWN;
+    workActive = true;
+    setWorkerState(true);
+    updateActionStates();
   };
 
   const updateLogs = (deltaMs) => {
@@ -410,12 +539,13 @@ const init = () => {
   };
 
   const loop = (now) => {
-    const delta = now - lastFrame;
+    const deltaReal = now - lastFrame;
     lastFrame = now;
-    const scaledDelta = delta * timeScale;
+    const scaledDelta = deltaReal * timeScale;
     simTime += scaledDelta;
     updateLogs(scaledDelta);
     updateFuel(scaledDelta);
+    tickCooldowns(deltaReal);
     requestAnimationFrame(loop);
   };
 
@@ -436,6 +566,8 @@ const init = () => {
     }
     updateAudioButton();
   });
+  buyButton.addEventListener("click", buyWood);
+  workButton.addEventListener("click", startWork);
   speedSlider.addEventListener("input", (event) => {
     const value = safeNumber(parseFloat(event.target.value), 1);
     setTimeScale(value);
@@ -446,6 +578,9 @@ const init = () => {
   }
   setTimeScale(timeScale);
   updateLogCount();
+  updateWoodUI();
+  updateMoneyUI();
+  updateActionStates();
   syncFuelUI();
   recordFuelSample();
   addLog();

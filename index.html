@@ -44,6 +44,7 @@
                 </g>
               </svg>
               <div class="log-layer" aria-live="polite"></div>
+              <div class="woodpile-visual" id="woodpile-visual" aria-hidden="true"></div>
             </div>
             <div class="hearth"></div>
             <div class="floor-tiles"></div>
@@ -87,6 +88,46 @@
             <strong>Glöd:</strong>
             <span id="ember-status">slocknar</span>
           </div>
+        </div>
+        <div class="inventory">
+          <div class="resource-card">
+            <span>Vedhög</span>
+            <strong id="wood-count">6</strong>
+          </div>
+          <div class="resource-card">
+            <span>Mynt</span>
+            <strong id="coin-count">20</strong>
+          </div>
+        </div>
+        <div class="action-grid">
+          <button id="buy-wood" class="pill-button">
+            <div class="label">
+              <span class="title">Köp ved (+3)</span>
+              <span class="sub">8 kr</span>
+            </div>
+            <span class="cooldown-text" aria-live="polite"></span>
+            <span class="cooldown-meter"></span>
+          </button>
+          <button id="work" class="pill-button">
+            <div class="label">
+              <span class="title">Jobba</span>
+              <span class="sub">+6 kr</span>
+            </div>
+            <span class="cooldown-text" aria-live="polite"></span>
+            <span class="cooldown-meter"></span>
+          </button>
+        </div>
+        <div class="worker-stage">
+          <div class="worker" id="worker" aria-hidden="true">
+            <div class="worker-head"></div>
+            <div class="worker-body">
+              <div class="worker-arm left"></div>
+              <div class="worker-arm right"></div>
+              <div class="worker-leg left"></div>
+              <div class="worker-leg right"></div>
+            </div>
+          </div>
+          <div class="worker-status" id="worker-status">redo</div>
         </div>
         <div class="chart-card">
           <div class="chart-header">
