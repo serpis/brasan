@@ -279,6 +279,25 @@ body {
   font-size: 1.8rem;
 }
 
+.panel-utilities {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.time-control {
+  width: 100%;
+}
+
+.time-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: rgba(252, 234, 207, 0.9);
+}
+
 .status {
   margin-top: 0.6rem;
 }
