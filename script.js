@@ -200,6 +200,8 @@ const init = () => {
   const woodCountEl = document.getElementById("wood-count");
   const coinCountEl = document.getElementById("coin-count");
   const foodCountEl = document.getElementById("food-count");
+  const coinIconsEl = document.getElementById("coin-icons");
+  const foodIconsEl = document.getElementById("food-icons");
   const energyFillEl = document.getElementById("energy-fill");
   const energyTextEl = document.getElementById("energy-text");
   const buyButton = document.getElementById("buy-wood");
@@ -229,6 +231,8 @@ const init = () => {
     !woodCountEl ||
     !coinCountEl ||
     !foodCountEl ||
+    !coinIconsEl ||
+    !foodIconsEl ||
     !energyFillEl ||
     !energyTextEl ||
     !buyButton ||
@@ -305,6 +309,13 @@ const setTimeScale = (value) => {
 
   const updateMoneyUI = () => {
     coinCountEl.textContent = String(coins);
+    coinIconsEl.innerHTML = "";
+    const coinsVisible = Math.min(12, coins);
+    for (let i = 0; i < coinsVisible; i += 1) {
+      const coin = document.createElement("div");
+      coin.className = "coin";
+      coinIconsEl.appendChild(coin);
+    }
   };
 
   const updateWoodUI = () => {
@@ -315,6 +326,13 @@ const setTimeScale = (value) => {
 
   const updateFoodUI = () => {
     foodCountEl.textContent = String(foodStock);
+    foodIconsEl.innerHTML = "";
+    const steaksVisible = Math.min(10, foodStock);
+    for (let i = 0; i < steaksVisible; i += 1) {
+      const steak = document.createElement("div");
+      steak.className = "steak";
+      foodIconsEl.appendChild(steak);
+    }
   };
 
   const updateEnergyUI = () => {

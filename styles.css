@@ -443,6 +443,43 @@ body {
   color: #ffe5bb;
 }
 
+.resource-icons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 24px;
+  flex-wrap: wrap;
+}
+
+.coin {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ffe9a6, #ffcd5a 65%, #c4922c);
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.25);
+}
+
+.steak {
+  width: 22px;
+  height: 16px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 40% 40%, #ffb9a5, #c5523f 70%);
+  border: 2px solid #7a2118;
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.steak::before {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.6);
+  top: 3px;
+  left: 5px;
+}
+
 .energy-card {
   grid-column: span 2;
 }
